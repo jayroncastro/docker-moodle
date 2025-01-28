@@ -1,0 +1,65 @@
+services:
+  db:
+    image: mysql:8.0.40-bookworm
+    container_name: "db"
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - net-db-local
+
+  app:
+    image: jayroncastro/moodle:latest
+    depends_on:
+      - db
+    container_name: "app"
+    volumes:
+      - app:/home/customuser/moodle
+      - app_data:/home/customuser/moodledata
+    ports:
+      - 80
+      - 443
+    restart: always
+    environment:
+      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME}
+      MOODLE_DATABASE_USER: ${MOODLE_DATABASE_USER}
+      MOODLE_DATABASE_PASSSWORD: ${MOODLE_DATABASE_PASSSWORD}
+      MOODLE_DATABASE_HOST: ${MOODLE_DATABASE_HOST}
+    networks:
+      - frontend-moodle
+      - net-db-app
+
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin:latest
+    container_name: "phpmyadmin"
+    restart: always
+    ports:
+      - 80
+      - 443
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      PMA_HOST: ${PMA_HOST}
+      PMA_PORT: ${PMA_PORT}
+      PMA_PMADB: ${PMA_PMADB}
+      PMA_USER: ${PMA_USER}
+      PMA_PASSWORD: ${PMA_PASSWORD}
+    networks:
+      - net-db-app
+
+volumes:
+  db_data: {}
+  app: {}
+  app_data: {}
+
+networks:
+  net-frontend-moodle:
+    external: true
+  net-db-app:
+    driver: bridge
